@@ -28,11 +28,11 @@ Another objective was to compare the Rust benchmarks’ performance with their C
 
 ## 3. Features
 
-The PBBS benchmark suite is built on ParlayLib [18] which is a parallel algorithm library developed in C++. The original authors already ported part of the ParlayLib functions into Rust; we further contributed to the functions that are missing in the original RPB. We ported a total of 4 benchmarks from text processing and computational geometry/graphics categories, along with their required ParlayLib functions. 
+The PBBS benchmark suite is built on ParlayLib [18] which is a parallel algorithm library developed in C++. The original authors already ported part of the ParlayLib functions into Rust; we further contributed to the functions that are missing in the original RPB. We ported a total of 4 benchmarks from the text processing and computational geometry categories, along with their required ParlayLib functions.
 
 ### 3.1 Text Processing
 
-Two benchmarks under the text processing category are ported, namely Word Count and Inverted Index. We ported a sequential version and a parallel version for each of them.
+Two benchmarks under the text processing category are ported, Word Count and Inverted Index. We ported a sequential version and a parallel version for each of them.
 
 #### 3.1.1 Word Count
 
@@ -50,7 +50,7 @@ We ported the function `tokens` and its required sub-functions into Rust. `token
 
 We also ported the `block_delayed_scan` function into Rust. It performs parallel prefix sum [19] by dividing the input vector into fixed-size blocks, performs sequential accumulation within each block, and sums up the results of each block for the final prefix sum. The scan is exclusive, only counting up to and excluding the current element.
 
-The `histogram_by_key` function is already ported by the original authors of RPB, which we took advantage of conveniently. It has the equivalent functionality of using a hash map to increment the occurrence counter in the sequential version. This function takes in a vector of tokens generated from the above functions and a hash function. It returns a vector of tuples, where the keys are the unique tokens and the values are the number of occurrences of each token in the input. 
+The `histogram_by_key` function is already ported by the original authors of RPB, which we took advantage of. It has the equivalent functionality of using a hash map to increment the occurrence counter in the sequential version. This function takes in a vector of tokens generated from the above functions and a hash function. It returns a vector of tuples, where the keys are the unique tokens and the values are the number of occurrences of each token in the input. 
 
 The ported parallel version is a combination of histogram and histogramStar in the original PBBS word count benchmark. We studied the original two benchmarks and concluded that the differences are negligible when porting into Rust. Thus, we decided to merge them into a single benchmark.
 
@@ -73,6 +73,35 @@ Instead of processing documents one by one, we process all documents in parallel
 We replaced some ParlayLib functions used in the original PBBS with implementations having equivalent functionality. This is due to the Rust-only limitations on some ParlayLib functions introduced by the original RPB authors. This added slight overhead, but we tried not to reimplement these functions to avoid breaking existing RPB tests. 
 
 ### 3.2 Computational Geometry
+
+Two computational geometry benchmarks are ported, nearest neighbours and convex hull, with 2 parallel algorithms for the former and a sequential algorithm for the latter.
+
+### 3.2.1 Nearest Neighbours
+
+The nearest neighbours problem, or knn takes as input a list of points in 2 or 3 dimensions and for each point returns indices of the k nearest points to it. Both algorithms we ported assume k=1.
+
+**Naive**
+
+To find the nearest neighbour of a point, the naive algorithm simply iterates over all the other points and computes the distance to each. We do this for every point in parallel.
+
+**Chan05**
+
+Chan05 is taken from the paper [CITE]. It begins by converting the points, which are given as double precision floating point numbers, into integers. This is done by normalizing the range of values, so that the smallest value in any dimension always translates to 0. The number of bits used is 20 in the 3d case and 30 in the 2d, which results in a small loss of precision. If two points are nearly equidistant to, we might mistakenly choose the one that’s slightly further. A case-by-case analysis is required to determine if this is an acceptable tradeoff.
+
+In this form, we can bisect the points along the x-axis based on the leading bit in the x-component, and further bisect using lower order bits. This is similarly true for y and z. We organize the points by recursively splitting along rotating axes. For example, for a 2d point set, we’d first bisect the points into two groups along the x-axis, then bisect each group along the y-axis, then the x-axis, and so forth until every point is in its own group. This divides points hierarchically as a tree, known as a quadtree in 2d, or an octree in 3d. The tree is represented implicitly in an array.
+
+For a given reference point, the algorithm now begins by computing its distance to the point in the middle of the array, and updating the nearest neighbour if it’s closer than any previously computed point (which will always be the case the first time). Then it recursively searches the left and right halves of the array. By organizing the points as a quadtree/octree, it may sometimes be the case that a slice of points in the array cannot possibly be closer to the reference point than the current nearest neighbour, allowing us to prune this part of the search, and ultimately making this algorithm much faster than the naive algorithm.
+
+## 3.2.2 Convex hull
+
+The convex hull problem asks us to find the smallest convex polygon that contains a set of points in 2D. The vertices of the polygon will always be points in the set, so the output is a list of indices to the points. Although the problem can be generalized to higher dimensions, doing so greatly increases the complexity.
+
+**Sequential**
+
+Only the sequential algorithm has been ported so far, future work will be necessary for the parallel version.
+
+The algorithm is recursive. First we locate the left- and rightmost points in the set and divide all the points into those above and below the line segment connecting the two. The final solution will be: the leftmost point, a convex hull of the points above the line, the rightmost point, then a convex hull of the points below the line. For the upper portion, find the point above the line that maximizes the area of a triangle with it, and the leftmost and rightmost points as its verticies. This point will be part of the final solution. Divide the remaining points into those to the left and right of the triangle and solve them recursively. We can ignore any points inside the triangle. 
+
 
 ## 4. User’s Guide
 
