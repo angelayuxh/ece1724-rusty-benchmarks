@@ -86,7 +86,7 @@ To find the nearest neighbour of a point, the naive algorithm simply iterates ov
 
 **Chan05**
 
-Chan05 is taken from the paper [CITE]. It begins by converting the points, which are given as double precision floating point numbers, into integers. This is done by normalizing the range of values, so that the smallest value in any dimension always translates to 0. The number of bits used is 20 in the 3d case and 30 in the 2d, which results in a small loss of precision. If two points are nearly equidistant to, we might mistakenly choose the one that’s slightly further. A case-by-case analysis is required to determine if this is an acceptable tradeoff.
+Chan05 is taken from the paper [20]. It begins by converting the points, which are given as double precision floating point numbers, into integers. This is done by normalizing the range of values, so that the smallest value in any dimension always translates to 0. The number of bits used is 20 in the 3d case and 30 in the 2d, which results in a small loss of precision. If two points are nearly equidistant to, we might mistakenly choose the one that’s slightly further. A case-by-case analysis is required to determine if this is an acceptable tradeoff.
 
 In this form, we can bisect the points along the x-axis based on the leading bit in the x-component, and further bisect using lower order bits. This is similarly true for y and z. We organize the points by recursively splitting along rotating axes. For example, for a 2d point set, we’d first bisect the points into two groups along the x-axis, then bisect each group along the y-axis, then the x-axis, and so forth until every point is in its own group. This divides points hierarchically as a tree, known as a quadtree in 2d, or an octree in 3d. The tree is represented implicitly in an array.
 
@@ -213,3 +213,5 @@ In conclusion, the Rust compiler does seem well built for the development of per
 17. J. Abdi, G. Posluns, G. Zhang, B. Wang, and M. C. Jeffrey, ‘When Is Parallelism Fearless and Zero-Cost with Rust?’, in Proceedings of the 36th ACM Symposium on Parallelism in Algorithms and Architectures, Nantes, France, 2024, pp. 27–40.
 18. G. E. Blelloch, D. Anderson, and L. Dhulipala, ‘ParlayLib - A Toolkit for Parallel Algorithms on Shared-Memory Multicore Machines’, in Proceedings of the 32nd ACM Symposium on Parallelism in Algorithms and Architectures, Virtual Event, USA, 2020, pp. 507–509.
 19. Wikipedia Contributors, “Prefix sum,” Wikipedia, Aug. 14, 2025.
+20. Timothy M. Chan, "A Minimalist's Implementation of an Approximate Nearest Neighbor
+Algorithm in Fixed Dimensions*", 2006. https://tmc.web.engr.illinois.edu/sss.pdf
