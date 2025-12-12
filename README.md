@@ -156,6 +156,26 @@ Parisa
 - Nearest Neighbors (sequential, parallel)
 - Convex Hull (sequential)
 
+## 7. Results
+
+We tested both Rust and C++ on ECF Linux machines. ECF machines have Intel(R) Xeon(R) Gold 6230 CPU @ 2.10GHz, with 80 CPU cores available. We tried our best to test on unloaded machines but results may still be affected by live machine workloads. All results below are the mean of 5 rounds of run.
+
+| Algorithm | Input Description | Rust (seconds) | C++ (seconds) |
+| - | - | - | - |
+| word count - sequential | 250 million characters | 1.067 |2.721 |
+| word count - parallel | 250 million characters | 1.532 | 0.168 |
+| inverted index - sequential | 250 million characters | 7.772 | 6.258 |
+| inverted index - parallel | 250 million characters | 3.712 | 0.278 |
+| nearest neighbours - naive (sequential) | 100 thousand points in 3d | 21.054 | 28.411 |
+| nearest neighbours - naive | 100 thousand points in 3d | 0.781 | 0.932 |
+| nearest neighbours - chan05 (sequential) | 2 million points in 3d | 3.321 | 9.085 |
+| nearest neighbours - chan05 | 2 million points in 3d | 0.131 | 0.203 |
+| convex hull - sequential | 100 million points in 2d | 4.880 | 3.923 |
+
+Across the benchmarks, we find consistently worse scaling in Rust with respective speedups of 0.7x, 2.1x, 27.0x, and 25.4x, for word count, inverted index, nearest neighbours, and convex hull whereas in C++ we obtained 16.2x, 22.5x, 30.5x, and 44.8x. Word count was the only benchmark where the sequential algorithm outperformed the parallel version. The sequential version even outperformed its C++ equivalent by nearly 2.6x. We suspect that this is because the native Rust function, `split_ascii_whitespace`, is very efficient, outperforming the C++ approach using `strtok` with a while loop.
+
+On average, Rust sequential implementation is 24% faster than C++. Parallel text processing benchmarks are 11x slower than C++, and nearest neighbors are 19% faster than C++. When we find C++ scaling better than Rust on another problem this could be due to any combination of a strong sequential Rust implementation (as we saw with word count), a poor parallel Rust implementation, a poor C++ sequential implementation, or a strong C++ parallel implementation. Unlike the other 3 problems, the nearest neighbours algorithms don’t have separate sequential and parallel implementations. The sequential results are obtained by running the parallel algorithm on a single core. This can make comparisons easier as there are fewer variables. Focusing just on nearest neighbours, the results we find are still well aligned with the original RPB paper [O], which show Rust outperforming C++ in sequentially, but having worse speedup. This suggests that although Rayon is very easy to use, it probably has some room for optimization.
+
 ## References
 
 1. cmuparlay, “GitHub - cmuparlay/pbbsbench: New version of pbbs benchmarks,” GitHub, 2019. https://github.com/cmuparlay/pbbsbench
