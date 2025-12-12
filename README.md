@@ -126,7 +126,7 @@ cargo run --release --bin=index -- ../test-inputs/index.txt -o=output.txt
 cargo run --release --bin=index -- ../test-inputs/index.txt -o=output.txt -a=parallel
 ```
 
-A user can provide custom inputs by modifying the provided files. The files are structured in a fairly intuitive way. To see the precise input specification for any benchmark, see the PBBS benchmark list [S].
+A user can provide custom inputs by modifying the provided files. The files are structured in a fairly intuitive way. To see the precise input specification for any benchmark, see the PBBS benchmark list [21].
 
 ## 5. Reproducibility Guide
 
@@ -142,7 +142,7 @@ cargo build --release
 
 All the required crates are already included in Cargo.toml. Cargo build will automatically download the crates.
 
-PBBS is not required to run our project. However, to compare the performance results of it with RPB, it can be set up by following its installation instructions [U]. PBBS also contains scripts to generate random input files.
+PBBS is not required to run our project. However, to compare the performance results of it with RPB, it can be set up by following its installation instructions [22]. PBBS also contains scripts to generate random input files.
 
 ## 6. Contributions
 
@@ -174,11 +174,11 @@ We tested both Rust and C++ on ECF Linux machines. ECF machines have Intel(R) Xe
 
 Across the benchmarks, we find consistently worse scaling in Rust with respective speedups of 0.7x, 2.1x, 27.0x, and 25.4x, for word count, inverted index, nearest neighbours, and convex hull whereas in C++ we obtained 16.2x, 22.5x, 30.5x, and 44.8x. Word count was the only benchmark where the sequential algorithm outperformed the parallel version. The sequential version even outperformed its C++ equivalent by nearly 2.6x. We suspect that this is because the native Rust function, `split_ascii_whitespace`, is very efficient, outperforming the C++ approach using `strtok` with a while loop.
 
-On average, Rust sequential implementation is 24% faster than C++. Parallel text processing benchmarks are 11x slower than C++, and nearest neighbors are 19% faster than C++. When we find C++ scaling better than Rust on another problem this could be due to any combination of a strong sequential Rust implementation (as we saw with word count), a poor parallel Rust implementation, a poor C++ sequential implementation, or a strong C++ parallel implementation. Unlike the other 3 problems, the nearest neighbours algorithms don’t have separate sequential and parallel implementations. The sequential results are obtained by running the parallel algorithm on a single core. This can make comparisons easier as there are fewer variables. Focusing just on nearest neighbours, the results we find are still well aligned with the original RPB paper [O], which show Rust outperforming C++ in sequentially, but having worse speedup. This suggests that although Rayon is very easy to use, it probably has some room for optimization.
+On average, Rust sequential implementation is 24% faster than C++. Parallel text processing benchmarks are 11x slower than C++, and nearest neighbors are 19% faster than C++. When we find C++ scaling better than Rust on another problem this could be due to any combination of a strong sequential Rust implementation (as we saw with word count), a poor parallel Rust implementation, a poor C++ sequential implementation, or a strong C++ parallel implementation. Unlike the other 3 problems, the nearest neighbours algorithms don’t have separate sequential and parallel implementations. The sequential results are obtained by running the parallel algorithm on a single core. This can make comparisons easier as there are fewer variables. Focusing just on nearest neighbours, the results we find are still well aligned with the original RPB paper [17], which show Rust outperforming C++ in sequentially, but having worse speedup. This suggests that although Rayon is very easy to use, it probably has some room for optimization.
 
 ## 8. Lessons Learned and Concluding Remarks
 
-Although a staple of introductory computer science classes, linked lists rarely see use in practice. In fact, the Rust documentation [T] generally recommends against it saying:
+Although a staple of introductory computer science classes, linked lists rarely see use in practice. In fact, the Rust documentation [23] generally recommends against it saying:
 
 > NOTE: It is almost always better to use Vec or VecDeque because array-based containers are generally faster, more memory efficient, and make better use of CPU cache
 
@@ -188,7 +188,7 @@ One other takeaway is that the Rayon crate is very powerful and super easy to us
 
 We noticed some limitations of the ported ParlayLib that were introduced by the original RPB authors that do not exist in the C++ version. For example, the function `remove_duplicates` is restricted to inputs that are primitive integers, thus we cannot use it for processing text inputs. Also, input types of certain functions are restricted to Copy traits, making these functions unusable when processing strings, vectors, etc. We had to relax the Copy traits to Clone traits to match with the functionality in C++ version.
 
-Another limitation we encountered is in convincing the Rust compiler that a set of writes are to distinct indices. In the Chan05 algorithm, we begin by sorting the points, however we want to output the nearest neighbour of each point in the same order as the input. Thus we convert each point to a tuple containing its initial location before sorting so we can relate the results back at the end. For example suppose there are 4 input points [p<sub>0</sub>, p<sub>1</sub>, p<sub>2</sub>, p<sub>3</sub>]. We would augment this to create  [(0, p<sub>0</sub>), (1, p<sub>1</sub>) (2, p<sub>2</sub>), (3, p<sub>3</sub>)], then sorting might yield something like [(3, p3), (0, p<sub>0</sub>), (1, p<sub>1</sub>), (2, p<sub>2</sub>)]. The nearest neighbours are computed in parallel to give [(3, nn<sub>0</sub>), (0, nn<sub>1</sub>), (1, nn<sub>2</sub>,), (2, nn<sub>3</sub>)]. Then we want to write each point into the output array based on the index in the tuple giving [nn<sub>1</sub>, nn<sub>2</sub>, nn<sub>3</sub>, nn<sub>0</sub>]. Attempting to do these writes in parallel, Rust has no way of knowing that they’re safe to do without synchronization. We elected to do this final step sequentially, and due to false sharing [V], this might not be any slower.
+Another limitation we encountered is in convincing the Rust compiler that a set of writes are to distinct indices. In the Chan05 algorithm, we begin by sorting the points, however we want to output the nearest neighbour of each point in the same order as the input. Thus we convert each point to a tuple containing its initial location before sorting so we can relate the results back at the end. For example suppose there are 4 input points [p<sub>0</sub>, p<sub>1</sub>, p<sub>2</sub>, p<sub>3</sub>]. We would augment this to create  [(0, p<sub>0</sub>), (1, p<sub>1</sub>) (2, p<sub>2</sub>), (3, p<sub>3</sub>)], then sorting might yield something like [(3, p3), (0, p<sub>0</sub>), (1, p<sub>1</sub>), (2, p<sub>2</sub>)]. The nearest neighbours are computed in parallel to give [(3, nn<sub>0</sub>), (0, nn<sub>1</sub>), (1, nn<sub>2</sub>,), (2, nn<sub>3</sub>)]. Then we want to write each point into the output array based on the index in the tuple giving [nn<sub>1</sub>, nn<sub>2</sub>, nn<sub>3</sub>, nn<sub>0</sub>]. Attempting to do these writes in parallel, Rust has no way of knowing that they’re safe to do without synchronization. We elected to do this final step sequentially, and due to false sharing [24], this might not be any slower.
 
 In conclusion, the Rust compiler does seem well built for the development of performance critical applications, even compared to C and C++. Furthermore, Rust’s memory management rules, although restrictive at times, are very easy to work within much of the time when using libraries. However, the restriction can still impede development sometimes, and we still aren’t managing to leverage multi-core systems as well as C and C++. Both of these issues can be addressed with improvements to the Rust compiler and library ecosystem.
 
@@ -215,3 +215,7 @@ In conclusion, the Rust compiler does seem well built for the development of per
 19. Wikipedia Contributors, “Prefix sum,” Wikipedia, Aug. 14, 2025.
 20. Timothy M. Chan, "A Minimalist's Implementation of an Approximate Nearest Neighbor
 Algorithm in Fixed Dimensions*", 2006. https://tmc.web.engr.illinois.edu/sss.pdf
+21. “PBBS Listing of Benchmarks,” The PBBS Benchmarks, 2025. https://cmuparlay.github.io/pbbsbench/benchmarks/index.html. 
+22. The PBBS Benchmark Suite (V2),” The PBBS Benchmarks, 2025. https://cmuparlay.github.io/pbbsbench/. 
+23. “LinkedList in std::collections - Rust,” Rust-lang.org, 2025. https://doc.rust-lang.org/std/collections/struct.LinkedList.html.
+24. Wikipedia Contributors, “False sharing,” Wikipedia, Jun. 12, 2025.
