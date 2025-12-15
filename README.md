@@ -3,6 +3,12 @@ Authors:
 - Parisa Betel Miri (1012458653) - parisa.betel.miri@mail.utoronto.ca
 - Angela Yu (1007004830) - angelaxh.yu@mail.utoronto.ca
 
+## Slide Presentation
+Click to download [here](presentation.mp4) or watch on [google drive](https://drive.google.com/file/d/1KvaZfLIM5j60bw6biUpMpTnrAGXuPgtL/view?usp=sharing).
+
+## Demo
+Click to download [here](demo.mp4) or watch on [google drive](https://drive.google.com/file/d/1Ufr6sV162gv4ovikcHL6Zd21AmuPXX1_/view?usp=sharing).
+
 ## 1. Motivation
 
 A key selling point of the Rust programming language is that of “fearless concurrency”, where in safe Rust allowing only immutable references, or a single mutable reference can prevent a number of common pitfalls of parallel programming, such as data races and deadlocks. However, for some applications these rules are overly restrictive and thus we need unsafe Rust. Some such cases can take advantage of existing unsafe libraries. For example Rayon [3] is written in unsafe Rust, but this library has been used hundreds of millions of times so it’s very well tested. Therefore, an application developer might not have to write their own unsafe code. Clearly, developers will experience a variable degree of safety depending on the problem at hand.
