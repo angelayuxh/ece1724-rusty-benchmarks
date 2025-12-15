@@ -9,6 +9,10 @@ Click to download [here](presentation.mp4) or watch on [google drive](https://dr
 ## Demo
 Click to download [here](demo.mp4) or watch on [google drive](https://drive.google.com/file/d/1Ufr6sV162gv4ovikcHL6Zd21AmuPXX1_/view?usp=sharing).
 
+## Abstract
+
+For this project we’ll be porting parallel C++ benchmarks from the PBBS [1, 2] to Rust. The main motivations for this are two-fold, to better understand the strengths and weaknesses of Rust’s unique approach to parallel programming, and to expand the ecosystem of available benchmarks.
+
 ## 1. Motivation
 
 A key selling point of the Rust programming language is that of “fearless concurrency”, where in safe Rust allowing only immutable references, or a single mutable reference can prevent a number of common pitfalls of parallel programming, such as data races and deadlocks. However, for some applications these rules are overly restrictive and thus we need unsafe Rust. Some such cases can take advantage of existing unsafe libraries. For example Rayon [3] is written in unsafe Rust, but this library has been used hundreds of millions of times so it’s very well tested. Therefore, an application developer might not have to write their own unsafe code. Clearly, developers will experience a variable degree of safety depending on the problem at hand.
